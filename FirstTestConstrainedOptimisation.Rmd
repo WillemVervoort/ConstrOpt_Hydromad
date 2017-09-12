@@ -1,0 +1,107 @@
+---
+title: "Testing constrained optimisation in Hydromad"
+author: "Willem Vervoort"
+date: "`r Sys.Date()`"
+output: 
+    pdf_document:
+      fig_width: 7
+      fig_height: 6
+      fig_caption: true
+---
+```{r setup, warning=F, message=F}
+# root dir
+knitr::opts_knit$set(root.dir = "C:/Users/rver4657/ownCloud/working/constrOpt_hydromad")
+knitr::opts_chunk$set(echo = TRUE)
+# LOAD REQUIRED PACKAGES 
+library(tidyr)
+library(xts)
+library(zoo)
+library(hydromad)
+library(lattice)
+```
+
+# testing constrained optimisation in hydromad
+
+The idea is to include a constraint on the normal optimisation objective function (such as NSE or RMSE). The constraint needs to be that the individual error (pointwise error) should not be $> \beta$, $\beta$ is a small number that will be optimised. In essence this is the same as a regularisation, but in this case we use the \beta as a constraint.
+
+# Hydromad standard fit
+
+Load the hydromad Cotter test data and fit GR4J using simple optimisation
+
+```{r Cotterdata}
+data(Cotter)
+
+data.cal <- window(Cotter, start = "1990-01-01",
+                   end = "1998-12-31")
+
+# Define the model, important to define return_state=T
+Cotter_mod <- hydromad(DATA=data.cal,
+                   sma = "gr4j", routing = "gr4jrouting", 
+                   x1 = c(100,1500), x2 = c(-30,20), x3 = c(5,500), 
+                   x4 = c(0.5,10), etmult=c(0.01,0.5), 
+                   return_state=TRUE)
+
+# Fit traditional fit
+# Using Optim algorithm for fitting
+Cotter_fit<- fitByOptim(Cotter_mod,  
+                     objective=~hmadstat("r.squared")(Q,X))
+# Extract the coefficients and the summary
+summary(Cotter_fit)
+xyplot(Cotter_fit)
+```
+
+
+# A new objective function
+
+Define a new objective function that includes the constraint, refit the Cotter test data, check against standard fit.
+
+## defining the objective function
+
+This might be the trickiest bit, as this requires introducing a parameter, but how do we calibrate on this. First do the simple solution, basically we can choose beta and look at the results
+
+```{r defineObjective}
+hydromad.stats("ConstObj" = function(Q, X, ..., DATA = DATA, model = model, beta = 0.1) {
+  # define norm(e_i_obs - e_i_fitted)
+  #browser()
+  norm_error <- sum(sqrt((coredata(Q) - coredata(X))^2) - beta, na.rm=T)/length(coredata(Q))
+  obj <- hmadstat("r.squared")(Q, X, ...) + norm_error
+  return(obj)
+    })
+```
+
+## Calibrating the model
+
+```{r fitConstrOptim}
+# Using Optim algorithm for fitting
+Cotter_Cfit<- fitByOptim_C(Cotter_mod,  
+                     objective=~hmadstat("ConstObj")(Q=Q,X=X,DATA=DATA,model=Cotter_mod,beta=0.01))
+# Extract the coefficients and the summary
+summary(Cotter_Cfit)
+xyplot(Cotter_Cfit)
+```
+
+## second try, use log(dnorm(residuals))
+```{r defineObjective2}
+hydromad.stats("ConstObjL" = function(Q, X, ..., DATA = DATA, model = model, mu=0, sigma = 0.1) {
+  # define norm(e_i_obs - e_i_fitted)
+  #browser()
+  R <- dnorm((coredata(Q) - coredata(X)),mu,sigma)
+  obj <- hmadstat("r.squared")(Q, X, ...) + log(R)
+  return(obj)
+    })
+```
+
+```{r fitConstrOptimL}
+# Using Optim algorithm for fitting
+Cotter_Cfit<- fitByOptim_C(Cotter_mod,  
+                     objective=~hmadstat("ConstObjL")(Q=Q,X=X,DATA=DATA,model=Cotter_mod,mu=0, sigma = 0.1))
+# Extract the coefficients and the summary
+summary(Cotter_Cfit)
+xyplot(Cotter_Cfit)
+```
+
+# Compare against standard ConstrOptim() or nloptr?
+
+
+
+
