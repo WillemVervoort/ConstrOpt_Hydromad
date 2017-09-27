@@ -59,9 +59,9 @@ inpars <- suppressWarnings(sapply(coef(Cotter_mod), mean))
 Cotter_in <- update(Cotter_mod, newpars=inpars)
 
 inpars$mu <- 0
-inpars$sd <- 0.5
-lb <- c(sapply(coef(Cotter_mod),min),-1,0.01)
-ub <- c(sapply(coef(Cotter_mod),max),1,2)
+inpars$sd <- 0.25
+lb <- unlist(c(sapply(coef(Cotter_mod),min),-1,0.01))
+ub <- unlist(c(sapply(coef(Cotter_mod),max),1,2))
 
 fit <- optim(do.call(c,inpars),foo,Hmodel=Cotter_in, method = "L-BFGS-B",
              lower = lb, upper = ub)
@@ -69,5 +69,6 @@ str(fit)
 xyplot(update(Cotter_in,newpars=fit$par[1:5]))
 Cotter_fit <-update(Cotter_in,newpars=fit$par[1:5])
 hist(residuals(Cotter_fit))
+fit$par
 
 nseStat(data.cal$Q,Cotter_fit$fitted.values)
