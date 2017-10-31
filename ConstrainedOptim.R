@@ -115,7 +115,13 @@ summary(Cotter_fit_q_ET, items = c("rel.bias", "r.squared","r.sq.sqrt", "r.sq.lo
 # essentially the same solution as earlier, ET calibration has no effect
 # plot
 xyplot(Cotter_fit_q_ET)
-nseStat(data.modis.cal$aET,Cotter_fit_q_ET[["Fit ET and Q"]]$U$ET)
+aET_obs <- aggregate(data.modis.cal$aET,
+                     list(date=data.modis.cal$et.period),sum)
+ET_pred <- aggregate(Cotter_fit_q_ET[["Fit ET and Q"]]$U$ET,
+                     list(date=data.modis.cal$et.period),
+                     sum)
+
+nseStat(coredata(aET_obs),coredata(ET_pred))
 plot.ET(data.modis.cal,Cotter_fit_q_ET[["Fit ET and Q"]])
 
 
@@ -164,15 +170,6 @@ test_QET <- objfun(par=c(600, 0, 100, 2, 0.15, 5),
 # Now write an optimisation routine that includes this
 # Optimisation routine
 
-# lower boundaries
-# x1, x2, x3, x4, etmult, beta
-lb <- c(100, -30, 5, 0.6 , 0.01, 0.1)
-# upper boundaries
-up <- c(1500, 20, 500, 10, 0.5, 10)
-
-# initial values
-par_in <- c(600, 0.1, 100, 2, 0.15, 5)
-
 # use optim and L-BFGS-B
 sol <- optim(par_in, objfun,method="L-BFGS-B", 
              in_data=data.modis.cal, mod=Cotter_mod_M,
@@ -196,9 +193,16 @@ hmadstat("r.sq.sqrt")(data.modis.cal$Q[101:length(data.modis.cal$Q)],fitted(mode
 hmadstat("r.sq.log")(data.modis.cal$Q[101:length(data.modis.cal$Q)],fitted(model_fit_M))
 
 # Show the ET calibration
+aET_obs <- aggregate(data.modis.cal$aET,
+                     list(date=data.modis.cal$et.period),sum)
+ET_pred <- aggregate(model_fit_M$U$ET,
+                     list(date=data.modis.cal$et.period),
+                     sum)
+
+nseStat(coredata(aET_obs),coredata(ET_pred))
+
 plot.ET(caldata=data.modis.cal,model_fit_M)
-nseStat(data.modis.cal$aET,model_fit_M$U$ET)
 
 # improved the low flow and general flow calibration, reduced the peaks
-# slightly improved the ET calibration
+# reduced the ET calibration
 # this model is not spactial, so not really taking advantage of the ET data
