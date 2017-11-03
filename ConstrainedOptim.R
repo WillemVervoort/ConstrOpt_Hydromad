@@ -1,4 +1,5 @@
-
+# testing constrained optimisation
+# using norm(error - beta)
 
 require(hydromad)
 
@@ -40,7 +41,7 @@ objfun <- function(par, in_data, mod, ...) {
   #browser()
   error <- fitted(mod_run) - in_data$Q
   
-  adj_error <- abs(abs(error) - par[6])
+  adj_error <- sqrt((sqrt(error^2) - par[6])^2)
   SSE <- sqrt(sum((error)^2,na.rm=T))/length(error)
   
   

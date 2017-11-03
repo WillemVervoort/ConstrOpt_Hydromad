@@ -73,7 +73,7 @@ objfun <- function(par, in_data, mod, ...) {
   #browser()
   error <- fitted(mod_run) - in_data$Q
   
-  adj_error <- abs(abs(error) - par[6])
+  adj_error <- sqrt((sqrt(error^2) - par[6])^2)
   SSE <- sqrt(sum((error)^2,na.rm=T))/length(error)
   
   
@@ -215,7 +215,7 @@ objfun <- function(par, in_data, mod, ...) {
   # Q objective functions
   error_Q <- fitted(mod_run) - in_data$Q
   
-  adj_error_Q <- abs(abs(error_Q) - par[6])
+  adj_error_Q <- sqrt((sqrt(error_Q^2) - par[6])^2)
   SSE_Q <- sqrt(sum((error_Q)^2,na.rm=T))/length(error_Q)
   # ET objective function
   # aggregate the ET data to the 8 day totals
