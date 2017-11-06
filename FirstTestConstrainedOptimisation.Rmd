@@ -60,7 +60,12 @@ Define a new objective function that includes the constraint, refit the Cotter t
 
 ## defining the objective function
 
-This might be the trickiest bit, as this requires introducing a parameter $\beta$, but also calibrate on this. Originally I wanted to rewrite the hydromad optimisation function, but I have started much easier by defining my own function that can be optimised using the standard optim function
+This might be the trickiest bit, as this requires introducing a parameter $\beta$, but also to calibrate on this. Originally I wanted to rewrite the hydromad optimisation function, but I have started much easier by defining my own function that can be optimised using the standard optim function. In principle this assumes that the constraints:  
+$error < \beta$  
+and  
+$error > -\beta$  
+Can be rewritten as:
+$\sqrt{(\sqrt(error^2) - \beta)^2}$
 
 ```{r defineObjective}
 objfun <- function(par, in_data, mod, ...) {

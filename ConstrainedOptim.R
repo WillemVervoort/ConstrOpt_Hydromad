@@ -1,5 +1,7 @@
 # testing constrained optimisation
 # using norm(error - beta)
+# automated version
+
 
 require(hydromad)
 
@@ -57,12 +59,12 @@ test <- objfun(par=c(600, 0, 100, 2, 0.15, 5),
 
 # lower boundaries
 # x1, x2, x3, x4, etmult, beta
-lb <- c(100, -30, 5, 0.6 , 0.01, 0.1)
+lb <- c(100, -30, 5, 0.6 , 0.01, 0.01)
 # upper boundaries
-up <- c(1500, 20, 500, 10, 0.5, 10)
+up <- c(1500, 20, 500, 10, 0.5, 0.05)
 
 # initial values
-par_in <- c(600, 0.1, 100, 2, 0.15, 5)
+par_in <- c(600, 0.1, 100, 2, 0.15, 0.02)
 
 # use optim and L-BFGS-B
 sol <- optim(par_in, objfun,method="L-BFGS-B", 
@@ -155,7 +157,7 @@ objfun <- function(par, in_data, mod, ...) {
   #browser()
   error_ET <- coredata(ET_fin) - coredata(aET_fin)
   
-  adj_error_ET <- abs(abs(error_ET) - par[6])
+  adj_error_ET <- sqrt((sqrt(error_ET^2) - par[6]))
   SSE_ET <- sqrt(sum((error_ET)^2,na.rm=T))/length(error_ET)
   
   w <- 0.5
